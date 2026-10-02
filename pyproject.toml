@@ -1,0 +1,20 @@
+[project]
+name = "ic-gemini-media-mcp"
+version = "0.1.0"
+description = "Local MCP tools for Gemini Veo video generation"
+requires-python = ">=3.11"
+dependencies = [
+  "google-genai>=1.0,<2",
+  "mcp>=1.20,<2",
+  "python-dotenv>=1.0,<2",
+]
+
+[project.scripts]
+ic-gemini-media-mcp = "gemini_media_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gemini_media_mcp"]
