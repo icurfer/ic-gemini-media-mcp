@@ -78,7 +78,7 @@ def start_video(
     image_path: str | None = None,
     last_frame_path: str | None = None,
     reference_image_paths: list[str] | None = None,
-    model: str = "veo-3.1-fast-generate-preview",
+    model: str = "veo-3.1-lite-generate-preview",
     duration_seconds: int = 8,
     aspect_ratio: str = "9:16",
     resolution: str = "720p",

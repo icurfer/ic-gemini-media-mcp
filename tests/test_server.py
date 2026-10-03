@@ -46,7 +46,7 @@ class VideoToolsTest(TestCase):
             started = server.start_video(prompt="A knight walks in place", duration_seconds=8)
             self.assertEqual(started["operation_name"], pending.name)
             self.assertFalse(started["done"])
-            self.assertEqual(first_client.generated["model"], "veo-3.1-fast-generate-preview")
+            self.assertEqual(first_client.generated["model"], "veo-3.1-lite-generate-preview")
             self.assertEqual(server.check_video(pending.name)["video_count"], 1)
             target = Path(directory) / "knight.mp4"
             downloaded = server.download_video(pending.name, str(target))

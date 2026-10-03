@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# praxis-review — hygiene check so the system's growth stays signal, not noise.
+#
+# The discipline system is meant to GROW (each incident adds a rule/gate/memory).
+# This surfaces the sprawl that growth creates, so you can prune it:
+#   - orphan memory files   (exist on disk but not linked in MEMORY.md)
+#   - dangling index lines  (MEMORY.md points to a file that's gone)
+#   - dangling Codex adapters (.agents/skills/<name>/ whose canonical
+#     procedure under .claude/ was deleted — the adapter routes to nothing)
+#   - growth stats + the list of active gates
+#
+# SCOPE: this script inspects the `.claude/` + `.agents/` layout. If this repo
+# keeps its rules elsewhere (constitution + docs/ only, no `.claude/`), the
+# script has nothing to check — delete it rather than leaving a dead entrypoint.
+#
+# Personal memory files (`user-*.md`, `*.local.md` — git-ignored by convention)
+# are skipped everywhere below: they are not team assets, so they are neither
+# orphans nor index candidates.
+#
+# Read-only. It reports and proposes; it never deletes. Run:
+#   bash scripts/praxis-review.sh
+set -euo pipefail
+
+MEM=".claude/memory"
+IDX="$MEM/MEMORY.md"
+GATE="scripts/check-conventions.sh"
+SKILLS=".claude/skills"
+AGENTS=".claude/agents"
+ADAPTERS=".agents/skills"   # Codex-native thin adapters (route to .claude/ canon)
+
+CYA=$'\033[36m'; YEL=$'\033[33m'; GRN=$'\033[32m'; DIM=$'\033[2m'; RST=$'\033[0m'
+hdr() { printf '\n%s== %s ==%s\n' "$CYA" "$1" "$RST"; }
+
+if [ ! -d "$MEM" ]; then
+  echo "no $MEM/ here — run from a scaffolded project root." >&2
+  echo "(If this repo deliberately keeps no .claude/, this script doesn't apply — delete it.)" >&2
+  exit 1
+fi
+
+# all TEAM memory files: everything but the index and personal notes
+# (no mapfile — bash 3.2/macOS compatible)
+FILES=()
+while IFS= read -r _f; do FILES+=("$_f"); done \
+  < <(find "$MEM" -maxdepth 1 -name '*.md' ! -name 'MEMORY.md' ! -name 'user-*.md' ! -name '*.local.md' | sort)
+
+hdr "Growth"
+printf '  team memory files: %s\n' "${#FILES[@]}"
+personal="$(find "$MEM" -maxdepth 1 \( -name 'user-*.md' -o -name '*.local.md' \) 2>/dev/null | wc -l | tr -d ' ')"
+[ "${personal:-0}" -gt 0 ] && printf '  personal (ignored, not team assets): %s\n' "$personal"
+if [ -f "$GATE" ]; then
+  # Count gate section headers, locale-robust: an `# ── ` banner mentioning a
+  # gate/rule in any language ("Gate", "규칙", "règle", …). Falls back to any
+  # `# ── ` banner so a translated gate script still counts.
+  gates="$(grep -cE '^#[[:space:]]*──.*([Gg]ate|[Rr]ule|규칙|規則|règle|regla)' "$GATE" 2>/dev/null || true)"
+  [ "${gates:-0}" -eq 0 ] && gates="$(grep -cE '^#[[:space:]]*──' "$GATE" 2>/dev/null || true)"
+  printf '  active gates in %s: %s\n' "$GATE" "${gates:-?}"
+fi
+if [ -d "$SKILLS" ]; then
+  n="$(find "$SKILLS" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+  printf '  skills in %s: %s\n' "$SKILLS" "$n"
+fi
+if [ -d "$AGENTS" ]; then
+  n="$(find "$AGENTS" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
+  printf '  sub-agents in %s: %s\n' "$AGENTS" "$n"
+fi
+if [ -d "$ADAPTERS" ]; then
+  n="$(find "$ADAPTERS" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')"
+  printf '  codex adapters in %s: %s\n' "$ADAPTERS" "$n"
+fi
+
+hdr "Orphan memory files (on disk, not linked in MEMORY.md)"
+orphans=0
+for f in ${FILES[@]+"${FILES[@]}"}; do   # guarded: empty array + set -u crashes bash <4.4
+  base="$(basename "$f")"
+  if ! grep -qF "$base" "$IDX" 2>/dev/null; then
+    printf '  %s! %s%s  — add a line to MEMORY.md, or delete the file\n' "$YEL" "$base" "$RST"
+    orphans=$((orphans+1))
+  fi
+done
+[ "$orphans" -eq 0 ] && printf '  %s✓ none%s\n' "$GRN" "$RST"
+
+hdr "Dangling index lines (MEMORY.md links a missing file)"
+dangling=0
+while IFS= read -r link; do
+  [ -n "$link" ] || continue
+  if [ ! -f "$MEM/$link" ]; then
+    printf '  %s! %s%s  — file missing; fix or remove the MEMORY.md line\n' "$YEL" "$link" "$RST"
+    dangling=$((dangling+1))
+  fi
+done < <(grep -E '^[[:space:]]*-[[:space:]]*\[' "$IDX" 2>/dev/null | grep -oE '\(([A-Za-z0-9_./-]+\.md)\)' | tr -d '()' | grep -v '^MEMORY.md$' || true)
+[ "$dangling" -eq 0 ] && printf '  %s✓ none%s\n' "$GRN" "$RST"
+
+# Adapters are thin by design — they route to a canonical procedure named after
+# the adapter (.claude/commands/<name>.md or .claude/skills/<name>/SKILL.md).
+# If the canon was deleted or renamed, the adapter still LOOKS installed but
+# routes to nothing; surface that instead of letting Codex discover a dead skill.
+if [ -d "$ADAPTERS" ]; then
+  hdr "Dangling Codex adapters ($ADAPTERS/ routes to a missing .claude/ canon)"
+  dangling_a=0
+  while IFS= read -r d; do
+    [ -n "$d" ] || continue
+    name="$(basename "$d")"
+    if [ ! -f ".claude/commands/$name.md" ] && [ ! -f ".claude/skills/$name/SKILL.md" ]; then
+      printf '  %s! %s%s  — no .claude/commands/%s.md or .claude/skills/%s/SKILL.md; restore the canon or delete the adapter\n' \
+        "$YEL" "$name" "$RST" "$name" "$name"
+      dangling_a=$((dangling_a+1))
+    fi
+  done < <(find "$ADAPTERS" -maxdepth 1 -mindepth 1 -type d | sort)
+  [ "$dangling_a" -eq 0 ] && printf '  %s✓ none%s\n' "$GRN" "$RST"
+fi
+
+hdr "Next"
+printf '  %sReview the rules themselves for staleness with:  /praxis-review%s\n' "$DIM" "$RST"
+printf '  %s(this script finds structural sprawl; judgment about "still true?" is the slash command)%s\n' "$DIM" "$RST"

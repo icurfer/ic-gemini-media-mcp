@@ -6,3 +6,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 output/
+# Adapted from ic-praxis 0.7.0 for this repository; see THIRD_PARTY_NOTICES.md.
+.claude/settings.local.json
+.claude/memory/user-*.md
+.claude/memory/*.local.md
+memory.bak.*

@@ -37,7 +37,10 @@ repository path, regardless of the caller's working directory.
 `start_video` accepts text only, one starting image, a first and last frame,
 or up to three character reference images. Reference images cannot be combined
 with first/last frames and require an 8-second video. The default is Veo 3.1
-Fast, 8 seconds, 720p, portrait. Each call to `start_video` can incur a charge;
+Lite, 8 seconds, 720p, portrait. Multiple reference images require an explicitly
+selected Fast or Standard model; the server never upgrades automatically.
+Veo 3.1 generates audio even for silent sprite tasks; discarding the audio
+afterward does not reduce the generation charge. Each call to `start_video` can incur a charge;
 status and download calls do not generate a new video. See [Google's current
 Veo guide](https://ai.google.dev/gemini-api/docs/veo) and
 [pricing](https://ai.google.dev/gemini-api/docs/pricing) before generating.
@@ -53,3 +56,18 @@ uv run python -m compileall -q src
 ```
 
 The tests use a fake video client and never spend API credit.
+
+## Project conventions
+
+This repository uses [ic-praxis](https://github.com/icurfer/ic-praxis) for a
+shared `CLAUDE.md` / `AGENTS.md` rule set, change records under `docs/`, and a
+secret and rule-sync gate. Enable the local gate once per clone:
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+The same gate runs in GitHub Actions. Use `bash scripts/check-conventions.sh --all`
+to scan tracked files in the current worktree. The project has no deploy
+trigger file; change the package version in `pyproject.toml` when preparing a
+release.
