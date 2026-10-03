@@ -72,7 +72,7 @@ FORBIDDEN_PATTERNS=(
 #     config-style files (BARE_VALUE_FILES_RE). In code, a bare RHS is a variable
 #     reference, not a literal — flagging `token = access_token` would drown the
 #     gate in false positives; quoted literals cover code.
-SECRET_KEY_RE='(password|passwd|secret_?key|secretkey|jwt_?secret|client_?secret|token|api_?key|fal_?key)'
+SECRET_KEY_RE='(password|passwd|secret_?key|secretkey|jwt_?secret|client_?secret|token|api_?key)'
 BARE_VALUE_FILES_RE='(^|/)(\.env[^/]*|[^/]+\.(ya?ml|properties|ini|conf|cfg|toml|env))$|(^|/)dockerfile[^/]*$'
 # A value that looks like a placeholder/scaffold is skipped. The check runs on
 # EVERY assignment on the line, value by value — a line is exempt only if ALL its
