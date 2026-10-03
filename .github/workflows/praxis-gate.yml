@@ -1,3 +1,4 @@
+# Adapted from ic-praxis 0.7.0; see THIRD_PARTY_NOTICES.md.
 # praxis gate — CI half of the pre-commit gate.
 #
 # WHY THIS EXISTS
@@ -42,10 +43,12 @@ jobs:
           else
             base="${{ github.event.before }}"
           fi
-          # New branch / first push reports an all-zero SHA — fall back to the
-          # empty tree so the whole repo is treated as added.
+          # New branch / first push reports an all-zero SHA. Create a temporary
+          # empty commit as the base; git reset --soft requires a commit, not a
+          # tree object. This makes the whole repo appear as staged additions.
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-            base="$(git hash-object -t tree /dev/null)"
+            empty_tree="$(git hash-object -t tree /dev/null)"
+            base="$(printf 'praxis empty base\n' | git -c user.name='praxis gate' -c user.email='praxis-gate@example.invalid' commit-tree "$empty_tree")"
           fi
           echo "sha=$base" >> "$GITHUB_OUTPUT"
           echo "base = $base"

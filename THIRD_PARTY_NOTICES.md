@@ -8,7 +8,7 @@ the license text is in [third_party/ic-praxis/LICENSE](third_party/ic-praxis/LIC
 The scaffold was tailored for this local Python MCP package. The modified
 scaffold files are `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.gitattributes`,
 `docs/README.md`, `docs/CHANGELOG.md`, `.claude/memory/MEMORY.md`,
-`.claude/skills/verify-app/SKILL.md`, `scripts/check-conventions.sh`, and
-`scripts/install-hooks.sh`. Other installed scaffold files retain their
+`.claude/skills/verify-app/SKILL.md`, `.github/workflows/praxis-gate.yml`,
+`scripts/check-conventions.sh`, and `scripts/install-hooks.sh`. Other installed scaffold files retain their
 upstream content. This notice describes the ic-praxis material and does not
 set the license for the rest of this repository.
