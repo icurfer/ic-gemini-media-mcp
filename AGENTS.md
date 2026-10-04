@@ -29,7 +29,7 @@ For a smaller change, implement and verify it, add one CHANGELOG line, and updat
 
 ## Delegated responsibilities
 - Run `uv run python -m unittest discover -s tests -v` and `uv run python -m compileall -q src` for code changes.
-- Check staged files with `bash scripts/check-conventions.sh` before committing. The same gate runs in CI.
+- Check staged files with `bash scripts/check-conventions.sh` before committing.
 - Keep the shared block in `CLAUDE.md` and `AGENTS.md` byte-identical.
 
 ## Do NOT
@@ -39,7 +39,7 @@ For a smaller change, implement and verify it, add one CHANGELOG line, and updat
 - Do not treat a code change as requiring an invented deploy version bump. No deployment pipeline watches one in this repository.
 
 ## Automated gate
-`.githooks/pre-commit` and `.github/workflows/praxis-gate.yml` run `scripts/check-conventions.sh` on staged changes. Enable the local hook with `bash scripts/install-hooks.sh`. Add a checkable rule to the gate when a real incident or requirement calls for it.
+`.githooks/pre-commit` runs `scripts/check-conventions.sh` on staged changes. No GitHub Actions workflow runs for this project. Enable the local hook with `bash scripts/install-hooks.sh`. Add a checkable rule to the gate when a real incident or requirement calls for it.
 <!-- praxis:shared:end -->
 
 ## Memory (agent-neutral, read on demand)

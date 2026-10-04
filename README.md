@@ -67,7 +67,7 @@ secret and rule-sync gate. Enable the local gate once per clone:
 bash scripts/install-hooks.sh
 ```
 
-The same gate runs in GitHub Actions. Use `bash scripts/check-conventions.sh --all`
-to scan tracked files in the current worktree. The project has no deploy
+Use `bash scripts/check-conventions.sh --all` to scan tracked files in the
+current worktree. The project has no GitHub Actions workflow or deploy
 trigger file; change the package version in `pyproject.toml` when preparing a
 release.
